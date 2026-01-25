@@ -1,10 +1,13 @@
 OUTPUT_FORMAT(binary)
 SECTIONS {
-	. = 0x0feffb;
+	. = 0xfeffb;
 
-	.data : {
-			/* Just include the section here */
+	.data 0x0feffb: {
+		*(.data)
+		*(.data.*)
+    	*(.gnu.linkonce.d*)
 	}
+
 
 	.text 0xff000 : {
 		*(.text)
@@ -16,9 +19,6 @@ SECTIONS {
 		*(.reginfo)
 		*(.MIPS.abiflags)
 
-		*(.data)
-		*(.data.*)
-    	*(.gnu.linkonce.d*)
 
 		*(.rodata)
 		*(.rodata.*)
@@ -33,6 +33,10 @@ SECTIONS {
 		*(.scommon)
 		*(.bss)
 	}
+
+	/* Sly functions/variables */
+
+	MatrixCopy = 0x14F5C8;
 
 	_end = .;
 }

@@ -1,8 +1,20 @@
 .set noreorder /* we dont need no stinking reordering. */
 .set noat
 
-/* TODO: data */
+.data
+meosCamFlag0:
+    .byte 0
+meosCamFlag1:
+    .byte 0
+meosCamPauseFlag:
+    .byte 0
+meosCamDisableHudFlag:
+    .byte 0
+meosCamFlag4:
+    .byte 0
 
+.text
+/* main update routine for the freecam when enabled */
 meosCamMain:
     addiu       $sp, $sp, -0x1A0
     sq          $s0, 0x140($sp)
@@ -232,7 +244,7 @@ meosCamMain:
     bc1tl       . + 4 + (0x1 << 2)
     mov.s       $f12, $f5
 
-    jal         0x14F5C8
+    jal         MatrixCopy
     addiu       $a0, $fp, 0x5340
 
     lq          $s0, 0x140($sp) /* epilogue */
@@ -267,7 +279,7 @@ meosFreecamGetThing:
     lhu         $a0, 0x0($v1)
     lw          $v0, 0x10B4($a2)
     and         $v0, $v0, $a0
-    beqz        $v0, . + 4 + (0xD << 2)
+    beqz        $v0, 0f
     nop
     addu        $v1, $a2, $a1
     addiu       $v0, $zero, 0x1
@@ -281,6 +293,7 @@ meosFreecamGetThing:
     cvt.s.w     $f0, $f0
     jr          $ra
     mul.s       $f0, $f0, $f1
+0:
     mtc1        $zero, $f0
     jr          $ra
     nop
@@ -372,8 +385,8 @@ meosFreecamEntryHook:
     nop
 
 meosFreecamFunc1:
-    lui         $t0, 0x10
-    lb          $t0, -0x1001($t0)
+    lui         $t0, %hi(meosCamFlag4)
+    lb          $t0, %lo(meosCamFlag4)($t0)
     lw          $v1, 0x314($v0)
     blez        $t0, . + 4 + (0x3 << 2)
     addiu       $v0, $v0, 0x3A0
@@ -383,35 +396,36 @@ meosFreecamFunc1:
     nop
 
 meosFreecamFunc2:
-    lui         $t0, 0x10
-    lb          $t0, -0x1001($t0)
-    blez        $t0, __lab2
+    lui         $t0, %hi(meosCamFlag4)
+    lb          $t0, %lo(meosCamFlag4)($t0)
+    blez        $t0, 0f
     lw          $a0, 0x30($a1)
     addiu       $t1, $zero, 0x400
     and         $a0, $a0, $t1
-    beq         $a0, $t1, __lab1
+    beq         $a0, $t1, 1f
     lw          $a0, 0x30($a1)
-__lab2:
+0:
     j           0x1C4824
     nop
-__lab1:
+1:
     j           0x1C4824
     addu        $a0, $zero, $zero
 
 meosFreecamFunc3:
-    lui         $t0, 0x10
-    lb          $t0, -0x1001($t0)
-    bgtz        $t0, . + 4 + (0x4 << 2)
+    lui         $t0, %hi(meosCamFlag4)
+    lb          $t0, %lo(meosCamFlag4)($t0)
+    bgtz        $t0, .L4
     addu        $v0, $zero, $zero
     lui         $v1, 0x2E
     lw          $v0, 0x5654($v1)
     xor         $v0, $v0, $a0
+.L4:
     jr          $ra
     sltiu       $v0, $v0, 0x1
 
 meosFreecamFunc4:
-    lui         $t0, 0x10
-    lb          $t0, -0x1001($t0)
+    lui         $t0, %hi(meosCamFlag4)
+    lb          $t0, %lo(meosCamFlag4)($t0)
     blez        $t0, . + 4 + (0x6 << 2)
     lw          $v0, 0x10B8($a0)
     addiu       $t0, $zero, 0x800

@@ -1,3 +1,5 @@
 #!/bin/bash
-
-paste -d, meoscam.addrs meoscam.bytes > meoscam_paired.csv
+# Using the UNIX paste command, combine the address and byte data together
+# into one "CSV" file. We don't write the header.
+#echo "Address,Word" > meoscam_paired.csv
+paste -d, res/meoscam.addrs res/meoscam.bytes > meoscam_paired.csv

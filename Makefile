@@ -21,6 +21,9 @@ all: meoscam_code_nonmatching.bin
 	./mkusapnach.py
 endif
 
+matrix:
+	$(MAKE)
+	$(MAKE) REGION=usa
 
 ifeq ($(MATCHING),y)
 clean:

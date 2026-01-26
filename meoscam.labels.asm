@@ -338,9 +338,9 @@ meosFreecamGetPressedFloat:
     /* Get controller button bitset */
     lw $v1, %lo(ControllerButtons)($t6)
     addiu $t0, $zero, \mask
-    /* do ControllerButtons & mask */
+    /* do (ControllerButtons & mask) */
     and $v1, $v1, $t0
-    /* if (ControllerButtons & mask) == mask, then branch to true label
+    /* if the AND results in mask, then branch to true label
         $t0 will contain the current value of the flag for you */
     beq $v1, $t0, \trueLabel
     lb $t0, %lo(\flagName)($t3)

@@ -298,28 +298,38 @@ meosCamMain:
 */
 meosFreecamGetPressedFloat:
     lui         $v0, %hi(ControllerButtonMaskLUT)
+    /* index button mask table */
     sll         $v1, $a1, 1
     addiu       $v0, $v0, %lo(ControllerButtonMaskLUT)
     daddu       $a2, $a0, $zero
     addu        $v1, $v1, $v0
     lhu         $a0, 0x0($v1)
+
+    /* check if the button was pressed */
     lw          $v0, 0x10B4($a2)
     and         $v0, $v0, $a0
-    beqz        $v0, 0f
+    beqz        $v0, .notPressed    /* button wasn't pressed */
     nop
+
+    /* the button was pressed */
     addu        $v1, $a2, $a1
     addiu       $v0, $zero, 0x1
     lbu         $a0, 0x10C0($v1)
+
+    /* load float constant
     lui         $at, 0x3B80
     ori         $at, $at, 0x8081
     mtc1        $at, $f1
+
     slt         $v1, $v0, $a0
     movn        $v0, $a0, $v1
     mtc1        $v0, $f0
     cvt.s.w     $f0, $f0
     jr          $ra
     mul.s       $f0, $f0, $f1
-0:
+
+.notPressed:
+    /* clear $f0 and return. */
     mtc1        $zero, $f0
     jr          $ra
     nop

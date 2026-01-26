@@ -2,7 +2,6 @@
 
 import binascii
 
-
 def splitByCount(s, n):
     return [s[i:i+n] for i in range(0, len(s), n)]
 
@@ -100,7 +99,7 @@ with open('07652DD9.freecam.pnach', 'w') as pnachFileRaw:
 
         # poke in the code blob
         pnachWriter.set_base_address(0x000ff000)
-        with open('meoscam_code_nonmatching.bin', 'rb') as codeFile:
+        with open('obj/usa/meoscam_code_nonmatching.bin', 'rb') as codeFile:
              for word in read_as_word_chunks(codeFile):
                     cheat.write_word(word)
 

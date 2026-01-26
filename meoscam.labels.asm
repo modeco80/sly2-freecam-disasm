@@ -144,7 +144,7 @@ meosCamMain:
     jal         FFloatsNear
     mtc1        $v0, $f13
 
-    beqz        $v0, . + 4 + (0x5 << 2)
+    beqz        $v0, .floatNotNear
     nop
 
     pextuw      $v0, $zero, $s0

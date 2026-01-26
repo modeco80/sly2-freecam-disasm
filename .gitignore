@@ -4,6 +4,8 @@ binutils/
 res/meoscam.pnach
 meoscam_code_orig.bin
 
+*.pnach
+
 *.bin
 *.o
 

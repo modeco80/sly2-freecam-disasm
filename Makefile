@@ -39,7 +39,7 @@ matrixclean:
 clean:
 	rm -rf $(OBJDIR)
 
-# check sha256sum matches, for PAL only
+# check sha256sum of the blob matches a clean extracted blob, for PAL only
 ifeq ($(MATCHING),y)
 check:
 	echo "b5c2ae13fdfc88fdf83ebb6acb83802cc3e9a5f680396cd39bda378068f7ec00  obj/pal/meoscam_code.bin" | sha256sum -c -
@@ -48,17 +48,17 @@ endif
 $(OBJDIR)/:
 	mkdir -p $@
 
+$(OBJDIR)/meoscam.ld: src/meoscam.ld
+	sed 's|REGIONLD|regions/$(REGION).ld|' $< | sed 's|OBJDIR|$(OBJDIR)|' - > $@
+
 ifeq ($(MATCHING),y)
-$(OBJDIR)/meoscam_code.bin: $(OBJECTS)
-	sed 's|REGIONLD|regions/$(REGION).ld|' src/meoscam.ld | sed 's|OBJDIR|$(OBJDIR)|' - > /tmp/lds_$(REGION).ld
-	$(LD) -T /tmp/lds_$(REGION).ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_linked.bin
+$(OBJDIR)/meoscam_code.bin: $(OBJDIR)/meoscam.ld $(OBJECTS)
+	$(LD) -T $(OBJDIR)/meoscam.ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_linked.bin
 	dd if=$(OBJDIR)/meoscam_code_linked.bin of=$@ bs=1 skip=5 status=none
 else
-$(OBJDIR)/meoscam_code_nonmatching.bin: $(OBJECTS)
-	sed 's|REGIONLD|regions/$(REGION).ld|' src/meoscam.ld > /tmp/lds_$(REGION).ld
-	$(LD) -T /tmp/lds_$(REGION).ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_nonmatching_linked.bin
+$(OBJDIR)/meoscam_code_nonmatching.bin: $(OBJDIR)/meoscam.ld $(OBJECTS)
+	$(LD) -T $(OBJDIR)/meoscam.ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_nonmatching_linked.bin
 	dd if=$(OBJDIR)/meoscam_code_nonmatching_linked.bin of=$@ bs=1 skip=5 status=none
-	rm /tmp/lds_$(REGION).ld
 endif
 
 $(OBJDIR)/%.o: src/%.asm

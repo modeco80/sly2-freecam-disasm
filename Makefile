@@ -17,6 +17,10 @@ MATCHING := n
 endif
 endif
 
+ifeq ($(MATCHING),n)
+BINARY_SUFFIX := _nonmatching
+endif
+
 OBJDIR := obj/$(REGION)
 
 # objects (in the correct order)
@@ -26,9 +30,9 @@ OBJECTS := \
 	$(OBJDIR)/vars.o
 
 ifeq ($(MATCHING),y)
-all: $(OBJDIR)/ $(OBJDIR)/meoscam_code.bin check
+all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin check
 else
-all: $(OBJDIR)/ $(OBJDIR)/meoscam_code_nonmatching.bin
+all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin
 ifeq ($(REGION),usa)
 	./mkusapnach.py
 endif
@@ -57,22 +61,13 @@ $(OBJDIR)/:
 $(OBJDIR)/meoscam.ld: src/meoscam.ld
 	sed 's|REGIONLD|regions/$(REGION).ld|' $< | sed 's|OBJDIR|$(OBJDIR)|' - > $@
 
-ifeq ($(MATCHING),y)
-$(OBJDIR)/meoscam_code.bin: $(OBJDIR)/meoscam_code_linked.elf
-	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code_linked.bin
-	dd if=$(OBJDIR)/meoscam_code_linked.bin of=$@ bs=1 skip=5 status=none
+$(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin: $(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.elf
+	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.bin
+	dd if=$(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.bin of=$@ bs=1 skip=5 status=none
 
 
-$(OBJDIR)/meoscam_code_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
+$(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
 	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
-else
-$(OBJDIR)/meoscam_code_nonmatching.bin: $(OBJDIR)/meoscam_code_nonmatching_linked.elf
-	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code_nonmatching_linked.bin
-	dd if=$(OBJDIR)/meoscam_code_nonmatching_linked.bin of=$@ bs=1 skip=5 status=none
-
-$(OBJDIR)/meoscam_code_nonmatching_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
-	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
-endif
 
 $(OBJDIR)/%.o: src/%.asm
 	$(AS) -EL -G0 -g -march=r5900 $< -o $@

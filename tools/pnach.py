@@ -12,11 +12,12 @@ class _PnachCheat:
 
     # writes a pnach patch to write the given word into memory
     # if the provided bytestring is not large enough, it is padded with 0 bytes
-    def write_word(self, bytestring, mode='0', reverse=True):
-       self._pnach_writer._write_word(bytestring, mode, reverse)
+    def write_word(self, bytestring, reverse=True):
+       self._pnach_writer._write_word(bytestring, reverse)
 
-    def write_word_raw(self, string):
-        self._pnach_writer.write_word_raw(string)
+    def write_word_freeze(self, bytestring, reverse=True):
+       self._pnach_writer._write_word_freeze(bytestring, reverse)
+
 
 
 # A basic writer for pnach files
@@ -47,7 +48,7 @@ class PnachWriter:
 
     # writes a pnach patch to write the given word into memory
     # if the provided bytestring is not large enough, it is padded with 0 bytes
-    def _write_word(self, bytestring, mode='0', reverse=True):
+    def _write_word_mode(self, mode, bytestring, reverse=False):
        pad_length = len(bytestring) % 4
 
        if reverse:
@@ -61,10 +62,8 @@ class PnachWriter:
        self._file.write(f'patch={mode},EE,20{self._addr:06x},extended,{byte_string}\n')
        self._addr += 0x4
 
-    # unsafe as hell
-    def write_word_raw(self, string, mode='0'):
-        groups = splitByCount(string, 2)
-        assert(len(groups) == 4)
-        hexWord = f'{groups[3]}{groups[2]}{groups[1]}{groups[0]}'
-        self._file.write(f'patch={mode},EE,20{self._addr:06x},extended,{hexWord}\n')
-        self._addr += 0x4
+    def _write_word(self, bytestring, reverse=False):
+       self._write_word_mode('0', bytestring, reverse)
+
+    def _write_word_freeze(self, bytestring, reverse=False):
+       self._write_word_mode('1', bytestring, reverse)

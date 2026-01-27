@@ -5,7 +5,7 @@ import sys
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 
-from instutils import generateJ, generateJal, instBytes
+from instutils import Instructions
 from pnach import PnachWriter
 
 
@@ -93,30 +93,25 @@ with open(f'{region['pnachCRC']}.freecam.pnach', 'w') as pnachFileRaw:
         cheat = pnachWriter.begin_cheat('Freecam','Meos for original freecam, modeco80 USA/Disasm', 'Press L3 to enable freecam. See original Meos pnach for other controls.')
         # poke in the hooks
 
-        # entry hook
+        # vtable entry hook
         pnachWriter.set_base_address(region['entryHookAddress'])
-        cheat.write_word(instBytes(generateJal(addrTable['meosFreecamEntryHook'])), '0', False)
+        cheat.write_word(Instructions.jal(addrTable['meosFreecamEntryHook']), reverse=False)
 
         # fun1 hook
         pnachWriter.set_base_address(region['func1HookAddress'])
-        cheat.write_word(instBytes(generateJal(addrTable['meosFreecamFunc1'])), '0', False)
-        # delay slot nop
-        cheat.write_word_raw('00000000')
-
-        # fun2 hook
+        cheat.write_word(Instructions.jal(addrTable['meosFreecamFunc1']), reverse=False)
+        cheat.write_word(Instructions.nop()) # delay slot nop
         pnachWriter.set_base_address(region['func2HookAddress'])
-        cheat.write_word(instBytes(generateJ(addrTable['meosFreecamFunc2'])), '0', False)
-
+        cheat.write_word(Instructions.j(addrTable['meosFreecamFunc2']), reverse=False)
         pnachWriter.set_base_address(region['func3HookAddress'])
-        cheat.write_word(instBytes(generateJal(addrTable['meosFreecamFunc3'])), '0', False)
-
+        cheat.write_word(Instructions.jal(addrTable['meosFreecamFunc3']), reverse=False)
         pnachWriter.set_base_address(region['func4HookAddress'])
-        cheat.write_word(instBytes(generateJal(addrTable['meosFreecamFunc4'])), '0', False)
+        cheat.write_word(Instructions.jal(addrTable['meosFreecamFunc4']), reverse=False)
 
         # poke in the code blob
         pnachWriter.set_base_address(addrTable['meosCamText'])
         with open(f'obj/{REGION_NAME}/{BLOB_FILENAME}.bin', 'rb') as codeFile:
              for word in read_as_word_chunks(codeFile):
-                    cheat.write_word(word, '0')
+                    cheat.write_word(word, reverse=True)
 
 print('pnach file written successfully')

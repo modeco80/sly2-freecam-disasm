@@ -1,11 +1,16 @@
 def iclass(c):
     return int(c << 26)
 
-def generateJ(target):
-    return iclass(2) | ((int(target) >> 2) & 0x03ffffff)
-
-def generateJal(target):
-    return iclass(3) | ((int(target) >> 2) & 0x03ffffff)
-
-def instBytes(res):
-    return res.to_bytes(4)
+# MIPS instruction encoding helpers.
+class Instructions:
+    @staticmethod
+    def nop():
+        return b'\x00\x00\x00\x00'
+    # encodes a `j xxx`
+    @staticmethod
+    def j(target):
+        return int(iclass(3) | ((int(target) >> 2) & 0x03ffffff)).to_bytes(4)
+    # encodes a `jal xxx`
+    @staticmethod
+    def jal(target):
+        return int(iclass(3) | ((int(target) >> 2) & 0x03ffffff)).to_bytes(4)

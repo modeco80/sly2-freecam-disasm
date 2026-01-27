@@ -34,9 +34,8 @@ SECTIONS {
 		*(.bss)
 	}
 
-	/* Sly functions/variables that are referenced
-	 TODO for region independence: seperate include file*/
-
+	/* This LD script is preprocessed before usage, and the
+	   marker string will be replaced with a path to the given region. */
 	INCLUDE REGIONLD
 
 	_end = .;

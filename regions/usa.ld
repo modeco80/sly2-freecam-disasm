@@ -13,7 +13,8 @@ DecomposeRotateMatrixEuler = 0x11bff0;
 SetCmMat = 0x14e168;
 
 UnkFunc = 0x14f5a0;
-UnkFunc2 = 0x1c45a8;
+/* actually a trampoline back into the game code */
+UnkFunc2 = 0x1c45bc;
 
 /* Variables */
 CameraMatrix = 0x2ddfa0;

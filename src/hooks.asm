@@ -149,6 +149,7 @@ meosFreecamFunc2:
     and         $a0, $a0, $t1
     beq         $a0, $t1, .andFailed
     lw          $a0, 0x30($a1)
+    /* Trampoline back into the game code. */
 .flag4Unset2:
     j           UnkFunc2
     nop

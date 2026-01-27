@@ -3,6 +3,8 @@ binutils/
 # ref only
 res/
 
+**/__pycache__
+
 # build products
 *.pnach
 obj/

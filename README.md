@@ -14,7 +14,7 @@ You need:
 - A Linux system.
 - Basic build tools (make).
 - decompals binutils. It is available [here](https://github.com/decompals/binutils-mips-ps2-decompals/releases).
-- OPTIONAL: python.
+- OPTIONAL (for building the USA region): python.
 
 Place the decompals binutils binaries into a new `binutils/` folder.
 

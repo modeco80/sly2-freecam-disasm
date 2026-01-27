@@ -1,5 +1,9 @@
 /* This file contains region-specific addresses. */
 
+/* Data and .text addresses for the blob. */
+meosCamData = 0xfeffb;
+meosCamText = 0xff000;
+
 /* Functions. Names for these
 	 may come from the May prototype of Sly 1. */
 FFloatsNear = 0x11d4d0;

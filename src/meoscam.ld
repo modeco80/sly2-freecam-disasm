@@ -1,12 +1,16 @@
-OUTPUT_FORMAT(binary)
+/* ld script for the freecam blob */
 SECTIONS {
-	. = 0xfeffb;
+	/* This LD script is preprocessed before usage, and the
+	   marker string will be replaced with a path to the given region. */
+	INCLUDE REGIONLD
 
-	.data 0x0feffb: {
+	. = meosCamData;
+
+	.data meosCamData : {
 		OBJDIR/vars.o(.data)
 	}
 
-	.text 0xff000 : {
+	.text meosCamText : {
 		OBJDIR/main.o(.text)
 		OBJDIR/hooks.o(.text)
 	}
@@ -28,10 +32,6 @@ SECTIONS {
 		*(.scommon)
 		*(.bss)
 	}
-
-	/* This LD script is preprocessed before usage, and the
-	   marker string will be replaced with a path to the given region. */
-	INCLUDE REGIONLD
 
 	_end = .;
 }

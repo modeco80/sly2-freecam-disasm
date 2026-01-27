@@ -9,8 +9,12 @@ endif
 
 REGION=pal
 
+# If the default of matching is set, and the region isn't PAL,
+# force matching off. Otherwise, don't touch it.
+ifeq ($(MATCHING),y)
 ifneq ($(REGION),pal)
 MATCHING := n
+endif
 endif
 
 OBJDIR := obj/$(REGION)
@@ -25,7 +29,9 @@ ifeq ($(MATCHING),y)
 all: $(OBJDIR)/ $(OBJDIR)/meoscam_code.bin check
 else
 all: $(OBJDIR)/ $(OBJDIR)/meoscam_code_nonmatching.bin
+ifeq ($(REGION),usa)
 	./mkusapnach.py
+endif
 endif
 
 matrix:
@@ -52,13 +58,20 @@ $(OBJDIR)/meoscam.ld: src/meoscam.ld
 	sed 's|REGIONLD|regions/$(REGION).ld|' $< | sed 's|OBJDIR|$(OBJDIR)|' - > $@
 
 ifeq ($(MATCHING),y)
-$(OBJDIR)/meoscam_code.bin: $(OBJDIR)/meoscam.ld $(OBJECTS)
-	$(LD) -T $(OBJDIR)/meoscam.ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_linked.bin
+$(OBJDIR)/meoscam_code.bin: $(OBJDIR)/meoscam_code_linked.elf
+	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code_linked.bin
 	dd if=$(OBJDIR)/meoscam_code_linked.bin of=$@ bs=1 skip=5 status=none
+
+
+$(OBJDIR)/meoscam_code_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
+	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
 else
-$(OBJDIR)/meoscam_code_nonmatching.bin: $(OBJDIR)/meoscam.ld $(OBJECTS)
-	$(LD) -T $(OBJDIR)/meoscam.ld $(OBJECTS) -o $(OBJDIR)/meoscam_code_nonmatching_linked.bin
+$(OBJDIR)/meoscam_code_nonmatching.bin: $(OBJDIR)/meoscam_code_nonmatching_linked.elf
+	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code_nonmatching_linked.bin
 	dd if=$(OBJDIR)/meoscam_code_nonmatching_linked.bin of=$@ bs=1 skip=5 status=none
+
+$(OBJDIR)/meoscam_code_nonmatching_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
+	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
 endif
 
 $(OBJDIR)/%.o: src/%.asm

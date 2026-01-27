@@ -317,7 +317,7 @@ UBtnpJoy_LocalCopy:
     beqz        $v0, .notPressed    /* button wasn't pressed */
     nop
 
-    /* the button was pressed */
+    /* the button was pressed, load pressure */
     addu        $v1, $a2, $a1
     addiu       $v0, $zero, 0x1
     lbu         $a0, 0x10C0($v1)

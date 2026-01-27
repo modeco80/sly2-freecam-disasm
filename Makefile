@@ -31,10 +31,10 @@ OBJECTS := \
 
 ifeq ($(MATCHING),y)
 all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin check
-	./tools/mkpnach.py $(REGION)
+	./tools/mkpnach.py $(REGION) $(MATCHING)
 else
 all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin
-	./tools/mkpnach.py $(REGION)
+	./tools/mkpnach.py $(REGION) $(MATCHING)
 endif
 
 matrix:
@@ -69,4 +69,4 @@ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECT
 	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
 
 $(OBJDIR)/%.o: src/%.asm
-	$(AS) -EL -G0 -g -march=r5900 $< -o $@
+	cpp $< | $(AS) -EL -G0 -g -march=r5900 - -o $@

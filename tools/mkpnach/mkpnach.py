@@ -8,10 +8,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # modules we depend on
 from utils.mips import Mips
 from utils.pnach import PnachWriter
+from utils.elf import ElfSymbolizer
 
 # local modules
 from regionconsts import REGION_TABLE
-from addrtable import populateAddressTable, addrTable
 
 # Reads a file in 4 byte (EE word) yielded chunks
 def readWordChunks(file):
@@ -38,8 +38,8 @@ def main():
     else:
         BLOB_FILENAME = 'meoscam_code_nonmatching'
 
-    # Populate the address table from the ELF.
-    populateAddressTable(f'obj/{REGION_NAME}/{BLOB_FILENAME}_linked.elf')
+    # Open the ELF file so we can get at symbols in it.
+    elf = ElfSymbolizer(f'obj/{REGION_NAME}/{BLOB_FILENAME}_linked.elf')
 
     # Write the pnach out.
 
@@ -51,26 +51,28 @@ def main():
                 cheat.comment(' For detailed contributor information to the disassembly,')
                 cheat.comment(' see https://github.com/modeco80/sly2-freecam-disasm/graphs/contributors')
 
-                # Poke in the hooks to the game code
-                # vtable entry hook
-                cheat.setAddress(region['entryHookAddress'])
-                cheat.word(Mips.jal(addrTable['meosFreecamEntryHook']))
+                # Helpers to clean up function hooks
+                def jHook(hookAddress: int, targetAddress: int):
+                    cheat.setAddress(hookAddress)
+                    cheat.word(Mips.j(targetAddress))
 
-                cheat.setAddress(region['func1HookAddress'])
-                cheat.word(Mips.jal(addrTable['meosFreecamFunc1']))
-                cheat.word(Mips.nop()) # delay slot nop
+                def jalHook(hookAddress: int, targetAddress: int, nopDelaySlot=False):
+                    cheat.setAddress(hookAddress)
+                    cheat.word(Mips.jal(targetAddress))
+                    # If nopping the delay slot is requested, do so.
+                    if nopDelaySlot:
+                        cheat.word(Mips.nop())
 
-                cheat.setAddress(region['func2HookAddress'])
-                cheat.word(Mips.j(addrTable['meosFreecamFunc2']))
-
-                cheat.setAddress(region['func3HookAddress'])
-                cheat.word(Mips.jal(addrTable['meosFreecamFunc3']))
-
-                cheat.setAddress(region['func4HookAddress'])
-                cheat.word(Mips.jal(addrTable['meosFreecamFunc4']))
+                # Poke in the hooks to the game code. Use the ELF file's symbols to figure out
+                # where each of these hooks are actually placed in the blob, so it isn't hardcoded here.
+                jalHook(region['entryHookAddress'], elf.symbol('meosFreecamEntryHook'))
+                jalHook(region['func1HookAddress'], elf.symbol('meosFreecamFunc1'), nopDelaySlot=True)
+                jHook(region['func2HookAddress'], elf.symbol('meosFreecamFunc2'))
+                jalHook(region['func3HookAddress'], elf.symbol('meosFreecamFunc3'))
+                jalHook(region['func4HookAddress'], elf.symbol('meosFreecamFunc4'))
 
                 # For our last step, poke in the code blob.
-                cheat.setAddress(addrTable['meosCamText'])
+                cheat.setAddress(elf.symbol('meosCamText'))
                 with open(f'obj/{REGION_NAME}/{BLOB_FILENAME}.bin', 'rb') as codeFile:
                     for word in readWordChunks(codeFile):
                             cheat.word(word)

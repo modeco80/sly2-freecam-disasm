@@ -13,8 +13,10 @@ class Region(TypedDict):
     func3HookAddress: int
     func4HookAddress: int
 
-# Regions supported by this script. These regions must be able to build
-# the blob for themselves first before being added here.
+# Regions supported by mkpnach.
+#
+# These regions must be able to build the blob (see regions/*.ld)
+# first before being added to this table.
 REGION_TABLE : dict[str, Region] = {
         'pal': {
             'pnachCRC': 'FDA1CBF6',

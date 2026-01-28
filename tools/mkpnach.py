@@ -113,6 +113,6 @@ with PnachWriter.file(f'{region['pnachCRC']}.freecam.pnach') as pnachWriter:
             cheat.setAddress(addrTable['meosCamText'])
             with open(f'obj/{REGION_NAME}/{BLOB_FILENAME}.bin', 'rb') as codeFile:
                 for word in readWordChunks(codeFile):
-                        cheat.word(word, reverse=True)
+                        cheat.word(word)
 
 print('pnach file written successfully')

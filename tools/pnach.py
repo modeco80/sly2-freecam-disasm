@@ -1,45 +1,78 @@
-# Pnach writing helpers
+#!/bin/env python3
 
-import binascii
+# Pnach writing helpers.
 
 __all__ = [ 'PnachWriter' ]
 
-def splitByCount(s, n):
-    return [s[i:i+n] for i in range(0, len(s), n)]
-
-# A pnach cheat
+# A pnach cheat.
+# NOTES:
+# - short and word (and their freeze variants) take an `reverse` boolean,
+#   this essentially allows you to flip the endian if needed. by default
+#   these are true, but if you want the value to stay normal, you can do
+#   `,reverse=False` to opt out of this behavior for a single patch line
+#   if it's easier to you, or just bytes(reversed()) your input beforehand.
 class PnachCheat:
     def __init__(self, pnach_writer):
         self._pnach_writer = pnach_writer
 
-    # writes a pnach patch to write the given word into memory once
-    # if the provided bytestring is not large enough, it is padded with 0 bytes
-    def word(self, bytestring, reverse=False):
-        self._pnach_writer._write_word(bytestring, reverse)
+    def byte(self, inByteString: bytes):
+        self._pnach_writer._writeByte('EE', inByteString)
 
-    # same as word, but writes a freeze line
-    def wordFreeze(self, bytestring, reverse=False):
-        self._pnach_writer._write_word_freeze(bytestring, reverse)
+    def byteFreeze(self, inByteString: bytes):
+        self._pnach_writer._writeByteFreeze('EE', inByteString)
+
+    def short(self, inByteString: bytes, reverse=True):
+        self._pnach_writer._writeShort('EE', inByteString, reverse)
+
+    def shortFreeze(self, inByteString: bytes, reverse=True):
+        self._pnach_writer._writeShortFreeze('EE', inByteString, reverse)
+
+    def word(self, inByteString: bytes, reverse=True):
+        self._pnach_writer._writeWord('EE', inByteString, reverse)
+
+    def wordFreeze(self, inByteString: bytes, reverse=True):
+        self._pnach_writer._writeWordFreeze('EE', inByteString, reverse)
 
     def setAddress(self, address: int):
-        self._pnach_writer._set_address(address)
+        self._pnach_writer._setAddress(address)
 
     # writes a comment. if you want the comment to have an initial space,
     # the string you pass here must have it.
     def comment(self, com: str):
-        self._pnach_writer._write_comment(com)
+        self._pnach_writer._writeComment(com)
 
     # Context manager functions
     def __enter__(self):
-        self._old_address = self._pnach_writer._get_address()
+        self._old_address = self._pnach_writer._getAddress()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._pnach_writer._set_address(self._old_address)
+        self._pnach_writer._setAddress(self._old_address)
 
+# Returns the E-type for a particular word size.
+def getETypeForSize(size: int) -> str:
+    match size:
+        case 1:
+            return '0'
+        case 2:
+            return '1'
+        case 4:
+            return '2'
+        case _:
+            raise ValueError(f'Invalid size {size}')
+
+# Asserts a valid pnach CPU type.
+def assertValidCpu(cpu: str):
+    match cpu:
+        case 'EE':
+            pass
+        case 'IOP':
+            pass
+        case _:
+            raise ValueError(f'Invalid Pnach CPU {cpu}.')
 
 # A basic writer for pnach files. Supports usage as a context manager,
-# so it's quite easy to use and code shouldn't get to ratty.
+# so it's quite easy to use and code shouldn't get too ratty.
 class PnachWriter:
     _addr: int
 
@@ -50,12 +83,15 @@ class PnachWriter:
 
     def __init__(self, file):
        self._file = file
+       # TODO: We should probably store per-cpu addresses, instead of
+       # just storing one master address. For now it's whatever, since
+       # the APIs don't really support IOP patch lines yet...
        self._addr = 0x0
 
-    def _get_address(self) -> int:
+    def _getAddress(self) -> int:
         return self._addr
 
-    def _set_address(self, address: int):
+    def _setAddress(self, address: int):
        self._addr = address
 
     def close(self):
@@ -64,8 +100,8 @@ class PnachWriter:
 
     # Begins cheat. Returns a object which can be used to add
     # patche lines to the cheat
-    def cheat(self, section_name, author, comment) -> PnachCheat:
-       self._file.write(f'[{section_name}]\n')
+    def cheat(self, sectionName: str, author: str, comment: str) -> PnachCheat:
+       self._file.write(f'[{sectionName}]\n')
        if author:
            self._file.write(f'author={author}\n')
        if comment:
@@ -73,32 +109,65 @@ class PnachWriter:
        return PnachCheat(self)
 
 
-    def _write_comment(self, comment):
+    def _writeComment(self, comment: str):
        self._file.write(f'//{comment}\n')
 
-    # writes a pnach patch to write the given word into memory
-    # if the provided bytestring is not large enough, it is padded with 0 bytes
-    def _write_word_cpu_mode(self, mode, cpu, bytestring, reverse=False):
-       pad_length = len(bytestring) % 4
+    # Writes an E-type patch line for the given bytes.
+    def _writePnachLine(self, mode: str, cpu: str, size: int, inByteString: bytes, reverse=False):
+        # Do some checks on the input. CPU type, whether the byte string will actually make sense..
+        assertValidCpu(cpu)
+        if len(inByteString) < size:
+            raise ValueError('Invalid byte array for this size')
 
-       if reverse:
-        put_bytes = bytes(reversed(bytestring))
-       else:
-        put_bytes = bytes(bytestring)
+        # Currently this code can't "fall back" to an legacy type code,
+        # for later, this might be nice, since I believe the legacy
+        # code types can place anywhere. For now this sanity check should work.
+        if (self._addr & 0xf0000000) != 0:
+            raise ValueError(f'Address 0x{self._addr:08x} cannot be written to with an E-type code.')
 
-       if pad_length:
-            put_bytes += bytes(4 - len(bytestring))
-       byte_string = binascii.hexlify(put_bytes).decode('utf-8')
-       self._file.write(f'patch={mode},{cpu},20{self._addr:06x},extended,{byte_string}\n')
-       self._addr += 0x4
+        putBytes = inByteString[:size]
+        if reverse:
+            putBytes = bytearray(reversed(putBytes))
+        else:
+            putBytes = bytearray(putBytes)
 
-    def _write_word(self, bytestring, reverse=False):
-       self._write_word_cpu_mode('0', 'EE', bytestring, reverse)
+        # Add zero-padding.
+        if (len(putBytes) % 4) != 0:
+            putBytes[:0] = bytearray(4 - len(putBytes))
 
-    def _write_word_freeze(self, bytestring, reverse=False):
-       self._write_word_cpu_mode('1', 'EE', bytestring, reverse)
+        byteString = putBytes.hex()
+        codeType = getETypeForSize(size)
 
-    # IOP methods?
+        self._file.write(f'patch={mode},{cpu},{codeType}{self._addr:07x},extended,{byteString}\n')
+        self._addr += size
+
+
+    def _writeBytePatchLine(self, mode: str, cpu: str, inByteString: bytes):
+        return self._writePnachLine(mode, cpu, 1, inByteString, reverse=True)
+
+    def _writeShortPatchLine(self, mode: str, cpu: str, inByteString: bytes, reverse):
+        return self._writePnachLine(mode, cpu, 2, inByteString, reverse)
+
+    def _writeWordPatchLine(self, mode: str, cpu: str, inByteString: bytes, reverse):
+        return self._writePnachLine(mode, cpu, 4, inByteString, reverse)
+
+    def _writeByte(self, cpu: str, inByteString: bytes):
+       self._writeBytePatchLine('0', cpu, inByteString)
+
+    def _writeByte_freeze(self, cpu: str, inByteString: bytes):
+       self._writeBytePatchLine('1', cpu, inByteString)
+
+    def _writeShort(self, cpu: str, inByteString: bytes, reverse):
+       self._writeShortPatchLine('0', cpu, inByteString, reverse)
+
+    def _writeShort_freeze(self, cpu: str, inByteString: bytes, reverse):
+       self._writeShortPatchLine('1', cpu, inByteString, reverse)
+
+    def _writeWord(self, cpu: str, inByteString: bytes, reverse):
+       self._writeWordPatchLine('0', cpu, inByteString, reverse)
+
+    def _writeWordFreeze(self, cpu: str, inByteString: bytes, reverse):
+       self._writeWordPatchLine('1', cpu, inByteString, reverse)
 
     # Context manager functions
     def __enter__(self):

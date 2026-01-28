@@ -2,7 +2,7 @@ def iclass(c):
     return int(c << 26)
 
 def wordToBytes(word: int) -> bytes:
-    return word.to_bytes(4)
+    return bytes(reversed(word.to_bytes(4)))
 
 __all__ = [ 'Mips' ]
 
@@ -27,7 +27,7 @@ class Mips:
 # that the code here is okay, and works properly.
 try:
     assert(Mips.nop() == b'\x00\x00\x00\x00')
-    assert(Mips.j(0xff59c) == b'\x08\x03\xfd\x67')
-    assert(Mips.jal(0xff59c) == b'\x0c\x03\xfd\x67')
+    assert(Mips.j(0xff59c) == bytes(reversed(b'\x08\x03\xfd\x67')))
+    assert(Mips.jal(0xff59c) == bytes(reversed(b'\x0c\x03\xfd\x67')))
 except AssertionError:
     raise RuntimeError('Mips class is broken, fix it.')

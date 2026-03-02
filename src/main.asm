@@ -146,7 +146,7 @@ meosCamMain:
 .floatNotNear:
     bnez        $s3, .L1
     addiu       $s2, $sp, 0x10
-    addiu       $v0, $s7, 0x52D0
+    addiu       $v0, $s7, %lo(UnkCamStruct1)
     lwc1        $f1, 0x10($v0)
     lqc2        $vf6, 0x40($sp)
     lui         $at, 0x44C8
@@ -183,7 +183,7 @@ meosCamMain:
     c.eq.s      $f26, $f0
     nop
     bc1t        .L6
-    addiu       $s0, $fp, 0x5340
+    addiu       $s0, $fp, %lo(UnkCamStruct2)
 
 .L2:
     daddu       $a0, $s2, $zero
@@ -192,7 +192,7 @@ meosCamMain:
     jal         DecomposeRotateMatrixEuler
     sq          $v0, 0x50($sp)
     sq          $v0, 0x50($sp)
-    addiu       $v1, $s7, 0x52D0
+    addiu       $v1, $s7, %lo(UnkCamStruct1)
     lwc1        $f20, 0x10($v1)
     lwc1        $f0, 0x50($sp)
     mul.s       $f12, $f20, $f28
@@ -242,7 +242,7 @@ meosCamMain:
     sw          $zero, 0x3C($sp)
     sw          $zero, 0x2C($sp)
     sw          $zero, 0x1C($sp)
-    addiu       $s0, $fp, 0x5340
+    addiu       $s0, $fp, %lo(UnkCamStruct2)
 
 .L6:
     daddu       $a1, $s2, $zero
@@ -251,7 +251,7 @@ meosCamMain:
     neg.s       $f1, $f29
     lui         $at, 0x3E80
     mtc1        $at, $f2
-    addiu       $v0, $s7, 0x52D0
+    addiu       $v0, $s7, %lo(UnkCamStruct1)
     lwc1        $f3, 0x20($s0)
     lwc1        $f0, 0x10($v0)
     mul.s       $f1, $f1, $f2
@@ -276,7 +276,7 @@ meosCamMain:
 
 .L8:
     jal         UnkFunc
-    addiu       $a0, $fp, 0x5340
+    addiu       $a0, $fp, %lo(UnkCamStruct2)
 
     lq          $s0, 0x140($sp) /* C stack epilogue */
     lq          $s1, 0x130($sp)

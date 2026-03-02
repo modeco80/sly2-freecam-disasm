@@ -21,6 +21,8 @@ Func2Trampoline = 0x1c45bc;
 CameraMatrix = 0x2ddfa0;
 CameraUnk = 0x2ddee0;
 CameraZoom = 0x2ddf64;
+UnkCamStruct1 = 0x2dded0;
+UnkCamStruct2 = 0x2ddf40;
 
 HUDScaleX = 0x2a3a10;
 HUDScaleY = 0x2a3a1c;

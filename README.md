@@ -5,7 +5,9 @@ This is a matching disassembly of Meos' freecam for Sly 2 (PAL). The ASM source 
 - is fully labeled, meaning it doesn't depend on hardcoded jump offsets
 - gathers its externals from labels defined in separate linker script files
 
-This allows for a lot of fun things, including porting it to other regions. A (work-in-progress) USA port is actually provided in this repository!
+This allows for a lot of fun things, including porting it to other regions. 
+
+A USA port is actually provided in this repository!
 
 # Building
 
@@ -20,4 +22,7 @@ Run `pipenv install`. Once this has finished, run `pipenv shell`.
 
 Place the decompals binutils binaries into a new `binutils/` folder.
 
-Run `make`. Optionally, to build the USA code blob and pnach, run `make REGION=usa`.
+Run `make` to build the PAL blob and pnach.
+
+To build the USA code blob and pnach, run `make REGION=usa`. Other regions are built in the same way,
+but replace `usa` with.. something else. (you can also use pal to build PAL, but that's the default)

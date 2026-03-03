@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # modules we depend on
 from utils.mips import Mips
 from utils.pnach import PnachWriter
-from utils.elf import ElfSymbolizer
+from utils.elf import ElfWrapper
 
 # local modules
 from regionconsts import REGION_TABLE
@@ -20,6 +20,18 @@ def readWordChunks(file):
         if not data:
             break
         yield data
+
+def yieldWordChunksFromBytes(byteArray: bytes):
+    length = len(byteArray)
+    if length % 4 != 0:
+        raise RuntimeError('can we like not do that')
+    counter = 0
+    while True:
+        if counter >= length:
+            break
+        yield byteArray[counter:counter+4]
+        counter += 4
+
 
 # The fun begins...
 def main():
@@ -39,7 +51,7 @@ def main():
         BLOB_FILENAME = 'meoscam_code_nonmatching'
 
     # Open the ELF file so we can get at symbols in it.
-    elf = ElfSymbolizer(f'obj/{REGION_NAME}/{BLOB_FILENAME}_linked.elf')
+    elf = ElfWrapper(f'obj/{REGION_NAME}/{BLOB_FILENAME}.elf')
 
     # Write the pnach out.
 
@@ -64,7 +76,7 @@ def main():
                         cheat.word(Mips.nop())
 
                 # Poke in the hooks to the game code. Use the ELF file's symbols to figure out
-                # where each of these hooks are actually placed in the blob, so it isn't hardcoded here.
+                # where each of these hooks will go to in the blob, so it isn't hardcoded here.
                 jalHook(region['entryHookAddress'], elf.symbol('meosFreecamEntryHook'))
                 jalHook(region['func1HookAddress'], elf.symbol('meosFreecamFunc1'), nopDelaySlot=True)
                 jHook(region['func2HookAddress'], elf.symbol('meosFreecamFunc2'))
@@ -73,10 +85,8 @@ def main():
 
                 # For our last step, poke in the code blob.
                 cheat.setAddress(elf.symbol('meosCamText'))
-                with open(f'obj/{REGION_NAME}/{BLOB_FILENAME}.bin', 'rb') as codeFile:
-                    for word in readWordChunks(codeFile):
-                            cheat.word(word)
-
+                for word in yieldWordChunksFromBytes(elf.getProgramCore()):
+                        cheat.word(word)
     print('pnach file written successfully')
 
 if __name__ == '__main__':

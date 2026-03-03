@@ -30,10 +30,10 @@ OBJECTS := \
 	$(OBJDIR)/vars.o
 
 ifeq ($(MATCHING),y)
-all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin check
+all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).elf check
 	./tools/mkpnach/mkpnach.py $(REGION) $(MATCHING)
 else
-all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin
+all: $(OBJDIR)/ $(OBJDIR)/meoscam_code$(BINARY_SUFFIX).elf
 	./tools/mkpnach/mkpnach.py $(REGION) $(MATCHING)
 endif
 
@@ -51,7 +51,7 @@ clean:
 # check sha256sum of the blob matches a clean extracted blob, for PAL only
 ifeq ($(MATCHING),y)
 check:
-	echo "b5c2ae13fdfc88fdf83ebb6acb83802cc3e9a5f680396cd39bda378068f7ec00  obj/pal/meoscam_code.bin" | sha256sum -c -
+	./tools/mkpnach/sum.py
 endif
 
 $(OBJDIR)/:
@@ -60,12 +60,7 @@ $(OBJDIR)/:
 $(OBJDIR)/meoscam.ld: src/meoscam.ld
 	sed 's|REGIONLD|regions/$(REGION).ld|' $< | sed 's|OBJDIR|$(OBJDIR)|' - > $@
 
-$(OBJDIR)/meoscam_code$(BINARY_SUFFIX).bin: $(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.elf
-	$(OBJCOPY) -O binary $< $(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.bin
-	dd if=$(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.bin of=$@ bs=1 skip=5 status=none
-
-
-$(OBJDIR)/meoscam_code$(BINARY_SUFFIX)_linked.elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
+$(OBJDIR)/meoscam_code$(BINARY_SUFFIX).elf: $(OBJDIR)/meoscam.ld $(OBJECTS)
 	$(LD) -T $(OBJDIR)/meoscam.ld -EL $(OBJECTS) -o $@
 
 $(OBJDIR)/%.o: src/%.asm
